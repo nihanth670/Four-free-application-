@@ -1,0 +1,35 @@
+name: Azure HTML App Deployment
+
+# Both ways configuration
+on:
+  push:
+    branches:
+      - develop      # AUTOMATED RUN: Triggers instantly when you git push to develop
+  workflow_dispatch: # MANUAL RUN: Creates the "Run workflow" button in the browser
+
+permissions:
+  id-token: write    # Unlocks your OIDC Token Factory passport
+  contents: read     # Allows the runner machine to pull your HTML code files
+
+jobs:
+  deploy-to-azure:
+    runs-on: Windows-latest # Spins up a clean Windows server in the cloud
+    steps:
+      # Step A: Download your repository's code onto the runner
+      - name: Checkout Code from Develop Branch
+        uses: actions/checkout@v4
+
+      # Step B: Secure OIDC Handshake (Your Azure Service Connection)
+      - name: Authenticate with Azure via Federated Credentials
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}         # App Registration Client ID
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}         # Your Azure Directory Tenant ID
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} # Your Azure Subscription ID
+
+      # Step C: Stream your HTML code directly into your Azure Web App
+      - name: Deploy App1 Assets to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'apphtml' # Replace this with your active Azure App Service name
+          package: 'App1'                     # Target folder matching your VS Code layout
